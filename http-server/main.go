@@ -47,17 +47,22 @@ func createDefaultHTTPServer() {
 func createCustomHTTPServer() {
 
 	mux := http.NewServeMux()
-	/* There are two ways to register a handler for a route */
+	setupCustomMuxHandlers(mux)
 
+	/* Create a server instance on your own */
+	server := http.Server{Addr: ":8081", Handler: mux}
+
+	/* Create server - indicates a custom mux will be utilized */
+	log.Fatal(server.ListenAndServe())
+}
+
+func setupCustomMuxHandlers(mux *http.ServeMux) {
+	/* There are two ways to register a handler for a route */
 	/* First way */
-	mux.HandleFunc("/newmuxhttp", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("/custommuxhttp", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, "Custom Mux: Handler Func\n")
 	})
 
 	/* Second way */
-	mux.Handle("/newmuxhttp2", &CustomHandlerForCustomMux{})
-
-	/* Create server - indicates a custom mux will be utilized */
-	log.Fatal(http.ListenAndServe(":8081", mux))
-
+	mux.Handle("/custommuxhttp2", &CustomHandlerForCustomMux{})
 }
