@@ -9,13 +9,13 @@ import (
 type CustomHandlerForDefaultMux struct{}
 
 func (handler *CustomHandlerForDefaultMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, "Default Mux: Handler Struct")
+	fmt.Fprint(w, "Default Mux: Handler Struct\n")
 }
 
 type CustomHandlerForCustomMux struct{}
 
 func (handler *CustomHandlerForCustomMux) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, "Custom Mux: Handler Struct")
+	fmt.Fprint(w, "Custom Mux: Handler Struct\n")
 }
 
 func main() {
@@ -32,7 +32,7 @@ func createDefaultHTTPServer() {
 
 	/* First way */
 	http.HandleFunc("/defaultmuxhttp", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprint(w, "Default Mux: Handler Func")
+		fmt.Fprint(w, "Default Mux: Handler Func\n")
 	})
 
 	/* Second way */
@@ -51,7 +51,7 @@ func createCustomHTTPServer() {
 
 	/* First way */
 	mux.HandleFunc("/newmuxhttp", func(w http.ResponseWriter, req *http.Request) {
-		fmt.Fprint(w, "Custom Mux: Handler Func")
+		fmt.Fprint(w, "Custom Mux: Handler Func\n")
 	})
 
 	/* Second way */
