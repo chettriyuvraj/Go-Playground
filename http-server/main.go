@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"sync"
+	"time"
 )
 
 type CustomHandlerForDefaultMux struct{}
@@ -28,7 +33,13 @@ func main() {
 	// }
 
 	/* Exploring url package */
-	exploreURLPackage()
+	// exploreURLPackage()
+
+	/* Exploring request struct */
+	// exploreRequestStruct()
+
+	/* Demo a streaming server - launch and send a get req to /stream at :8082 */
+	demoStreamingServer()
 }
 
 /* Use the default mux to create a server */
@@ -98,7 +109,7 @@ func exploreURLPackage() {
 
 	/* Exploring the query separately */
 	fmt.Println()
-	query := parsedURL.Query()
+	query := parsedURL.Query() /* Has Add/Get/Del methods */
 	for k, vList := range query {
 		fmt.Printf("Key: %s\nValues:\n", k)
 		for i, v := range vList {
@@ -108,4 +119,110 @@ func exploreURLPackage() {
 		fmt.Println()
 	}
 
+}
+
+/* Quickly taking a look at the Request struct */
+func exploreRequestStruct() {
+	req := httptest.NewRequest("GET", "http://www.example.com/test-req", io.NopCloser(bytes.NewReader([]byte("This is a test body"))))
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Content-Type", "test/header")
+	fmt.Println()
+	fmt.Printf("Lets check out the request struct:\n\n")
+	fmt.Printf("URL: %s\n", req.URL)
+	fmt.Printf("Method: %s\n", req.Method)
+	fmt.Printf("Proto: %s\n", req.Proto)
+	buf, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer req.Body.Close()
+	fmt.Printf("Body: %s\n", buf)
+	fmt.Printf("Headers: \n")
+	headers := req.Header /* Has Add/Get/Del methods */
+	for k, vList := range headers {
+		fmt.Printf("Key: %s\n", k)
+		fmt.Printf("Values:\n")
+		for i, v := range vList {
+			fmt.Printf("%d.  %s\n", i, v)
+		}
+	}
+
+	/* Other stuff includes: Trailer, Response which contains redirect Response, Form, Multipart which is handled in another package */
+
+}
+
+/* Let's see how a server serves data in 'streaming' fashion with a small delay */
+func demoStreamingServer() {
+
+	/* Initialize the server and single handler that handles the streaming */
+	mux := http.NewServeMux()
+	streamHandleFunc := func(w http.ResponseWriter, req *http.Request) {
+		var wg sync.WaitGroup
+
+		/* Define both sides of streaming */
+		writeToPipeWithDelay := func(w *io.PipeWriter) {
+			defer w.Close()
+			defer wg.Done()
+			w.Write([]byte("Hey!"))
+			time.Sleep(time.Second * 1)
+			w.Write([]byte(" This"))
+			time.Sleep(time.Second * 1)
+			w.Write([]byte(" is"))
+			time.Sleep(time.Second * 1)
+			w.Write([]byte(" a"))
+			time.Sleep(time.Second * 1)
+			w.Write([]byte(" streamed reply :)"))
+		}
+
+		readFromPipeAndWriteToResponse := func(r *io.PipeReader, w http.ResponseWriter) {
+			defer wg.Done()
+
+			/* Initialize */
+			defer r.Close()
+			data := make([]byte, 200)
+
+			/* Check if flush supported */
+			f, flushSupported := w.(http.Flusher)
+
+			/* Set headers, second one to ensure no buffering on client side */
+			w.Header().Set("Content-Type", "text/plain")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+
+			for {
+				/* Read data */
+				n, err := r.Read(data)
+				if err != nil {
+					if err == io.EOF {
+						break
+					}
+					log.Fatal(err)
+				}
+
+				/* Write to response writer */
+				_, err = w.Write(data[:n])
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				/* Flush if possible */
+				if flushSupported {
+					f.Flush()
+				}
+			}
+		}
+
+		/* Create pipe */
+		pipeReader, pipeWriter := io.Pipe()
+		wg.Add(2)
+		go readFromPipeAndWriteToResponse(pipeReader, w)
+		go writeToPipeWithDelay(pipeWriter)
+		wg.Wait()
+	}
+
+	/* Register with mux */
+	mux.HandleFunc("/stream", streamHandleFunc)
+
+	/* Create server and serve */
+	server := http.Server{Addr: ":8082", Handler: mux}
+	log.Fatal(server.ListenAndServe())
 }
