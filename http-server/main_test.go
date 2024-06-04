@@ -41,7 +41,7 @@ func TestCustomMux(t *testing.T) {
 		req := httptest.NewRequest(tc.method, tc.path, nil)
 
 		mux.ServeHTTP(w, req)
-		_, err := io.Copy(&buf, w.Body)
+		_, err := io.Copy(&buf, w.Body) /* TODO: Use Result() to get Response and then test */
 		require.NoError(t, err, "%s: %v", tc.desc, err)
 		require.Equal(t, tc.want, buf.String(), tc.desc)
 	}
