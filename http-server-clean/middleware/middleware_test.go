@@ -35,7 +35,7 @@ func TestLoggingMiddleware(t *testing.T) {
 	logOutput := logBuf.String()
 	for _, word := range keywords {
 		if !strings.Contains(logOutput, word) {
-			t.Errorf("Error in logging middleware output: Doesn't contain keyword %s", word)
+			t.Errorf("error in logging middleware output: doesn't contain keyword %s", word)
 		}
 	}
 }
