@@ -12,7 +12,7 @@ func LoggingMiddleware(handler http.Handler, config *app.AppConfig) http.Handler
 			timeStart := time.Now()
 			handler.ServeHTTP(w, req)
 			timeTaken := time.Since(timeStart)
-			config.Logger.Printf("Path: %s; Method: %s, Time taken: %s", req.URL.EscapedPath(), req.Method, timeTaken)
+			config.Logger.Printf("(Path: %s; Method: %s, Time taken: %s)", req.URL.EscapedPath(), req.Method, timeTaken)
 		},
 	)
 }
