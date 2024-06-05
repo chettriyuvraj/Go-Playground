@@ -9,9 +9,15 @@ import (
 	"os"
 )
 
+const (
+	LOGGER_PREFIX = "[Yuvraj's personal logger:] "
+)
+
+var LOGGER_DEFAULT_FLAGS = log.Default().Flags()
+
 func main() {
 	/* Setup config, routers and middleware */
-	config := app.AppConfig{Logger: log.New(os.Stdout, "[Yuvraj's personal logger:] ", log.Default().Flags())}
+	config := app.AppConfig{Logger: log.New(os.Stdout, LOGGER_PREFIX, LOGGER_DEFAULT_FLAGS)}
 	mux := http.NewServeMux()
 	handlers.Register(mux, &config)
 	wrappedMux := middleware.Register(mux, &config)
