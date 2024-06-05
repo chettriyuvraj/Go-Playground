@@ -13,7 +13,7 @@ A 'cleaner' HTTP-server with separation of concerns between
 
 We will divide our app into the following packages
 
-### AppConfig
+### AppConfig (Package config)
 
 -  An _AppConfig_ struct that would handle all 'injections' e.g. Loggers, Database connections
 - Struct would contain:
