@@ -1,0 +1,1 @@
+/* Write an integration test that creates an actual server using httptest, makes request, checks response + middleware log */
