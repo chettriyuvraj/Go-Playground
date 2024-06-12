@@ -36,7 +36,7 @@ func (app *application) showMovieHandler(w http.ResponseWriter, req *http.Reques
 	headers := map[string][]string{
 		"Content-Type": {"application/json"},
 	}
-	err = app.writeJSON(w, movie, http.StatusOK, headers)
+	err = app.writeJSON(w, envelope{"movie": movie}, http.StatusOK, headers)
 	if err != nil {
 		app.logger.Printf("error: %v", err)
 		http.Error(w, "internal server error while retreiving movie", http.StatusInternalServerError)
