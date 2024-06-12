@@ -15,7 +15,7 @@ type config struct {
 	env  string
 }
 
-type app struct {
+type application struct {
 	config *config
 	logger *log.Logger
 }
@@ -32,7 +32,7 @@ func main() {
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
 
 	/* Initialize app */
-	app := app{config: &cfg, logger: logger}
+	app := application{config: &cfg, logger: logger}
 
 	/* Configure the mux */
 	mux := http.NewServeMux()
