@@ -1,14 +1,28 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
 )
 
 const version = "1.0"
 
-func (a *application) healthCheckHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintln(w, "status: available")
-	fmt.Fprintf(w, "environment: %s\n", a.config.env)
-	fmt.Fprintf(w, "version: %s\n", version)
+func (app *application) healthCheckHandler(w http.ResponseWriter, req *http.Request) {
+	/* Parse status to json JSON */
+	stats := map[string]string{
+		"status":      "available",
+		"environment": app.config.env,
+		"version":     version,
+	}
+	jsonData, err := json.Marshal(stats)
+	if err != nil {
+		app.logger.Printf("error: %v", err)
+		http.Error(w, "internal error while checking health", http.StatusInternalServerError)
+		return
+	}
+
+	/* Send response */
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+
 }
