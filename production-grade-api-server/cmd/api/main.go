@@ -34,14 +34,13 @@ func main() {
 	/* Initialize app */
 	app := application{config: &cfg, logger: logger}
 
-	/* Configure the mux */
-	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/healthcheck", app.healthCheckHandler)
+	/* Configure the routes using httprouter */
+	router := app.routes()
 
 	/* Launch server */
 	server := &http.Server{
 		Addr:         net.JoinHostPort("localhost", strconv.Itoa(cfg.port)),
-		Handler:      mux,
+		Handler:      router,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
