@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -48,22 +49,28 @@ func (app *application) writeJSON(w http.ResponseWriter, data interface{}, statu
 }
 
 func (app *application) readJSON(w http.ResponseWriter, req *http.Request, dst interface{}) error {
-	err := json.NewDecoder(req.Body).Decode(&dst)
+	maxBytes := 1_048_576
+	req.Body = http.MaxBytesReader(w, req.Body, int64(maxBytes))
+
+	dec := json.NewDecoder(req.Body)
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&dst)
 	if err != nil { /* Bad responses 400 = When there is an error during decoding  */
 		var syntaxError *json.SyntaxError
 		var unmarshalTypeError *json.UnmarshalTypeError
 		var invalidUnmarshalError *json.InvalidUnmarshalError
+		var maxBytesError *http.MaxBytesError
 
 		switch {
 		case errors.As(err, &syntaxError):
 			return fmt.Errorf("syntax error at offset %d", syntaxError.Offset)
-
 		case errors.As(err, &unmarshalTypeError):
 			if unmarshalTypeError.Field != "" {
 				return fmt.Errorf("body contains incorrect JSON for field %q", unmarshalTypeError.Field)
 			}
 			return fmt.Errorf("body contains incorrect JSON at offset %d", unmarshalTypeError.Offset)
-
+		case errors.As(err, &maxBytesError):
+			return fmt.Errorf("max size of the body can be %d", maxBytesError.Limit)
 		case errors.As(err, &invalidUnmarshalError): /* Will occur when we pass an invalid pointer to decode */
 			panic(err)
 
@@ -71,6 +78,10 @@ func (app *application) readJSON(w http.ResponseWriter, req *http.Request, dst i
 			return errors.New("badly formed JSON")
 		case errors.Is(err, io.EOF):
 			return errors.New("body must not be empty")
+
+		case strings.HasPrefix(err.Error(), "json: unknown fields"):
+			unknownFields := strings.Trim(err.Error(), "json: unknown fields ")
+			return fmt.Errorf("json has unknown fields %s", unknownFields)
 
 		default:
 			return err
