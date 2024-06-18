@@ -16,8 +16,7 @@ func (app *application) showMovieHandler(w http.ResponseWriter, req *http.Reques
 	/* Parse named parameter id */
 	id, err := app.readIDParam(req)
 	if err != nil {
-		app.logger.Printf("error: %v", err)
-		http.NotFound(w, req)
+		app.notFoundResponse(w, req)
 		return
 	}
 
@@ -38,8 +37,6 @@ func (app *application) showMovieHandler(w http.ResponseWriter, req *http.Reques
 	}
 	err = app.writeJSON(w, envelope{"movie": movie}, http.StatusOK, headers)
 	if err != nil {
-		app.logger.Printf("error: %v", err)
-		http.Error(w, "internal server error while retreiving movie", http.StatusInternalServerError)
-		return
+		app.serverErrorResponse(w, req, err)
 	}
 }
