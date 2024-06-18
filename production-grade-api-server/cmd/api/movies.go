@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,9 +16,10 @@ func (app *application) createMovieHandler(w http.ResponseWriter, req *http.Requ
 		Genres  []string `json:"genres"`
 	}
 
-	err := json.NewDecoder(req.Body).Decode(&input)
+	err := app.readJSON(w, req, &input)
 	if err != nil { /* Bad responses 400 = When there is an error during decoding  */
 		app.errorResponse(w, req, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	fmt.Fprintf(w, "%+v\n", input) /* TODO: cant we use writeJSON here directly? */

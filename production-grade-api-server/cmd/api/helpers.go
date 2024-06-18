@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -42,5 +44,38 @@ func (app *application) writeJSON(w http.ResponseWriter, data interface{}, statu
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	w.Write(jsonData)
+	return nil
+}
+
+func (app *application) readJSON(w http.ResponseWriter, req *http.Request, dst interface{}) error {
+	err := json.NewDecoder(req.Body).Decode(&dst)
+	if err != nil { /* Bad responses 400 = When there is an error during decoding  */
+		var syntaxError *json.SyntaxError
+		var unmarshalTypeError *json.UnmarshalTypeError
+		var invalidUnmarshalError *json.InvalidUnmarshalError
+
+		switch {
+		case errors.As(err, &syntaxError):
+			return fmt.Errorf("syntax error at offset %d", syntaxError.Offset)
+
+		case errors.As(err, &unmarshalTypeError):
+			if unmarshalTypeError.Field != "" {
+				return fmt.Errorf("body contains incorrect JSON for field %q", unmarshalTypeError.Field)
+			}
+			return fmt.Errorf("body contains incorrect JSON at offset %d", unmarshalTypeError.Offset)
+
+		case errors.As(err, &invalidUnmarshalError): /* Will occur when we pass an invalid pointer to decode */
+			panic(err)
+
+		case errors.Is(err, io.ErrUnexpectedEOF): /* At times, decode returns this - we send a generic response here */
+			return errors.New("badly formed JSON")
+		case errors.Is(err, io.EOF):
+			return errors.New("body must not be empty")
+
+		default:
+			return err
+		}
+	}
+
 	return nil
 }
