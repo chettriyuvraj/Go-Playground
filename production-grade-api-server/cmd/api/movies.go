@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,7 +10,20 @@ import (
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprintln(w, "This is the createMovie route..")
+	var input struct {
+		Title   string   `json:"title"`
+		Year    int32    `json:"year"`
+		Runtime int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+	}
+
+	err := json.NewDecoder(req.Body).Decode(&input)
+	if err != nil { /* Bad responses 400 = When there is an error during decoding  */
+		app.errorResponse(w, req, http.StatusBadRequest, err.Error())
+	}
+
+	fmt.Fprintf(w, "%+v\n", input) /* TODO: cant we use writeJSON here directly? */
+
 }
 
 func (app *application) showMovieHandler(w http.ResponseWriter, req *http.Request) {
