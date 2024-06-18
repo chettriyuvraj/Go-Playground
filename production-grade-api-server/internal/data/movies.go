@@ -2,6 +2,8 @@ package data
 
 import (
 	"time"
+
+	"github.com/chettriyuvraj/go-playground/production-grade-api-server/internal/validator"
 )
 
 type Movie struct {
@@ -12,4 +14,18 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime"`
 	Genres    []string  `json:"genres"`
 	Version   int32     `json:"version"`
+}
+
+func ValidateMovie(v *validator.Validator, movie *Movie) {
+	v.Check(movie.Title != "", "title", "must be provided")
+	v.Check(len(movie.Title) < 500, "title", "must not be more than 500 bytes long")
+
+	v.Check(movie.Year != 0, "year", "must be provided")
+	v.Check(movie.Year >= 1888, "year", "must be greater than 1888")
+	v.Check(movie.Year <= int32(time.Now().Year()), "year", "must not be in the future")
+
+	v.Check(movie.Genres != nil, "genres", "must be provided")
+	v.Check(len(movie.Genres) > 0, "genres", "must be greater than 0")
+	v.Check(v.Unique(movie.Genres), "genres", "must be unique")
+
 }

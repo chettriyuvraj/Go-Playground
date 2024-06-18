@@ -40,3 +40,7 @@ func (app *application) methodNotAllowedResponse(w http.ResponseWriter, req *htt
 	message := "this method is not supported"
 	app.errorResponse(w, req, http.StatusMethodNotAllowed, message)
 }
+
+func (app *application) failedValidationResponse(w http.ResponseWriter, req *http.Request, errors map[string]string) {
+	app.errorResponse(w, req, http.StatusUnprocessableEntity, errors)
+}

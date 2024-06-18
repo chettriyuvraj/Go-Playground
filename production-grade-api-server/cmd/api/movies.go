@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/chettriyuvraj/go-playground/production-grade-api-server/internal/data"
+	"github.com/chettriyuvraj/go-playground/production-grade-api-server/internal/validator"
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, req *http.Request) {
@@ -19,6 +20,20 @@ func (app *application) createMovieHandler(w http.ResponseWriter, req *http.Requ
 	err := app.readJSON(w, req, &input)
 	if err != nil { /* Bad responses 400 = When there is an error during decoding  */
 		app.errorResponse(w, req, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	movie := data.Movie{
+		Title:   input.Title,
+		Year:    input.Year,
+		Runtime: input.Runtime,
+		Genres:  input.Genres,
+	}
+
+	v := validator.New()
+	data.ValidateMovie(v, &movie)
+	if !v.Valid() {
+		app.failedValidationResponse(w, req, v.Errors)
 		return
 	}
 
