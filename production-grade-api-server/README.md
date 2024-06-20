@@ -7,4 +7,4 @@ This is a follow-along for Alex Edward's book [Let's Go Further](https://lets-go
 
 ## Progress
 
-- 20/06: A fairly robust basic set of APIs with separation of concerns (no middleware) has been created.
+- 20/06/24: A fairly robust basic set of APIs with separation of concerns (no middleware) has been created.
